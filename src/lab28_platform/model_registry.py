@@ -15,6 +15,9 @@ moves the alias back, and the serving path notices on its next refresh.
 from __future__ import annotations
 
 import json
+import os
+from collections.abc import Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -128,7 +131,9 @@ class ReleaseRegistry:
         """
         mlflow.set_experiment(self._settings.experiment)
         try:
-            with mlflow.start_run(run_name=f"release-{spec.prompt_version}") as run:
+            with _suppress_mlflow_run_links(), mlflow.start_run(
+                run_name=f"release-{spec.prompt_version}"
+            ) as run:
                 mlflow.log_params(spec.as_params())
                 if spec.evaluation:
                     mlflow.log_metrics(spec.evaluation)
@@ -374,3 +379,26 @@ def _as_int(raw: Any) -> int | None:
         return int(raw)
     except (TypeError, ValueError):
         return None
+
+
+@contextmanager
+def _suppress_mlflow_run_links() -> Iterator[None]:
+    """Avoid MLflow's emoji run links breaking Windows legacy consoles.
+
+    MLflow writes those links directly to ``stdout`` when a REST tracking store
+    closes a run.  A cp1252 console cannot encode the emoji, which used to turn
+    an otherwise successful registration into ``UnicodeEncodeError`` before the
+    champion alias was assigned.  The documented MLflow environment switch is
+    scoped to this operation so embedding this library does not mutate the
+    caller's process configuration permanently.
+    """
+    name = "MLFLOW_SUPPRESS_PRINTING_URL_TO_STDOUT"
+    previous = os.environ.get(name)
+    os.environ[name] = "true"
+    try:
+        yield
+    finally:
+        if previous is None:
+            os.environ.pop(name, None)
+        else:
+            os.environ[name] = previous

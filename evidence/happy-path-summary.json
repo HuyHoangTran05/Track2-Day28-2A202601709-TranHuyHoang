@@ -1,0 +1,26 @@
+{
+  "journey": "IT-J1-golden-path",
+  "status": "pass-local-leg",
+  "trace_id": "525440816dcc41a1b8dd7697d611f724",
+  "dag_id": "lab28_ingestion_pipeline",
+  "dag_run_id": "it-a9569f57",
+  "airflow_state": "success",
+  "delta_feedback_version": 4,
+  "mlflow_model_name": "lab28-rag-release",
+  "mlflow_champion_version_at_snapshot": "2",
+  "mlflow_run_id": "b8c181817c914b4696bbf39e22a77e8c",
+  "feature_service": "asker_serving_v1",
+  "qdrant_collection": "lab28_documents",
+  "evidence_refs": [
+    "evidence/ip01-kafka-consume.json",
+    "evidence/ip02-airflow-run.json",
+    "evidence/ip03-delta-history.json",
+    "evidence/ip04-feast-online.json",
+    "evidence/ip05-qdrant-search.json",
+    "evidence/ip06-mlflow-release.json"
+  ],
+  "gpu_leg": {
+    "status": "unverified",
+    "reason": "no real-vLLM GPU endpoint was available"
+  }
+}

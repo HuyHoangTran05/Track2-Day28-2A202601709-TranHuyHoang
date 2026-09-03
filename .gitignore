@@ -4,5 +4,29 @@ __pycache__/
 *.pyc
 .pytest_cache/
 .ruff_cache/
-evidence/
 readiness-report.json
+
+# Local credentials and machine-specific overrides.
+.env
+.env.*
+!.env.example
+ports.local
+ports.*.local
+
+# Test/build output that is not part of the submission evidence bundle.
+.coverage
+htmlcov/
+build/
+dist/
+*.egg-info/
+
+# Runtime databases, caches and model weights must never be submitted.
+*.db
+*.sqlite
+*.sqlite3
+*.safetensors
+*.ckpt
+*.pt
+*.pth
+*.onnx
+*.gguf
