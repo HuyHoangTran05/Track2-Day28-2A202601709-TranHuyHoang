@@ -4,7 +4,7 @@
 
 - Người thực hiện: **Trần Huy Hoàng — 2A202601709**
 - Hình thức: **cá nhân**
-- Nhánh nộp: [`ca-nhan-tran-huy-hoang`](https://github.com/HuyHoangTran05/Day28-2A202601709-TranHuyHoang/tree/ca-nhan-tran-huy-hoang)
+- Nhánh nộp: [`ca-nhan-tran-huy-hoang`](https://github.com/HuyHoangTran05/Track2-Day28-2A202601709-TranHuyHoang/tree/ca-nhan-tran-huy-hoang)
 - Ngày kiểm chứng: **2026-09-03 (Asia/Saigon)**
 - Reflection và các vai trò đã đảm nhiệm: [`ANSWERS.md`](ANSWERS.md)
 
