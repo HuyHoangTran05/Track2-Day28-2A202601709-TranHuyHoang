@@ -1,0 +1,136 @@
+{
+  "scenario": "optional Feast outage",
+  "hypothesis": "readiness remains degraded and names Feast; recovery restores the Feast probe without losing or duplicating Delta/Qdrant state",
+  "injected_at": "2026-09-03T09:26:28.400909+00:00",
+  "observed_at": "2026-09-03T09:26:34.985844+00:00",
+  "recovered_at": "2026-09-03T09:26:49.081382+00:00",
+  "injection": "docker compose stop feast",
+  "recovery": "docker compose start feast",
+  "before_state": {
+    "feedback_version": 9,
+    "feedback_rows": 19,
+    "document_version": 6,
+    "document_rows": 17,
+    "qdrant_points": 17
+  },
+  "baseline_readiness": {
+    "schema_version": "1",
+    "status": "degraded",
+    "components": [
+      {
+        "name": "kafka",
+        "ready": true,
+        "detail": "1 broker(s); 4 declared topics present",
+        "owner": "team-ingestion"
+      },
+      {
+        "name": "mlflow",
+        "ready": true,
+        "detail": "lab28-rag-release v2 is champion",
+        "owner": "team-data"
+      },
+      {
+        "name": "qdrant",
+        "ready": true,
+        "detail": "17 points; ok",
+        "owner": "team-serving"
+      },
+      {
+        "name": "vllm",
+        "ready": false,
+        "detail": "unreachable: ConnectError",
+        "owner": "team-serving"
+      },
+      {
+        "name": "feast",
+        "ready": true,
+        "detail": "ok",
+        "owner": "team-data"
+      }
+    ],
+    "trace_id": "809129f9a30fc259d0389851b7acf648"
+  },
+  "during_readiness": {
+    "schema_version": "1",
+    "status": "degraded",
+    "components": [
+      {
+        "name": "kafka",
+        "ready": true,
+        "detail": "1 broker(s); 4 declared topics present",
+        "owner": "team-ingestion"
+      },
+      {
+        "name": "mlflow",
+        "ready": true,
+        "detail": "lab28-rag-release v2 is champion",
+        "owner": "team-data"
+      },
+      {
+        "name": "qdrant",
+        "ready": true,
+        "detail": "17 points; ok",
+        "owner": "team-serving"
+      },
+      {
+        "name": "vllm",
+        "ready": false,
+        "detail": "unreachable: ConnectError",
+        "owner": "team-serving"
+      },
+      {
+        "name": "feast",
+        "ready": false,
+        "detail": "unreachable: ConnectError",
+        "owner": "team-data"
+      }
+    ],
+    "trace_id": "1db5e124a9a73e7ff368ba41aa812586"
+  },
+  "after_state": {
+    "feedback_version": 9,
+    "feedback_rows": 19,
+    "document_version": 6,
+    "document_rows": 17,
+    "qdrant_points": 17
+  },
+  "final_readiness": {
+    "schema_version": "1",
+    "status": "degraded",
+    "components": [
+      {
+        "name": "kafka",
+        "ready": true,
+        "detail": "1 broker(s); 4 declared topics present",
+        "owner": "team-ingestion"
+      },
+      {
+        "name": "mlflow",
+        "ready": true,
+        "detail": "lab28-rag-release v2 is champion",
+        "owner": "team-data"
+      },
+      {
+        "name": "qdrant",
+        "ready": true,
+        "detail": "17 points; ok",
+        "owner": "team-serving"
+      },
+      {
+        "name": "vllm",
+        "ready": false,
+        "detail": "unreachable: ConnectError",
+        "owner": "team-serving"
+      },
+      {
+        "name": "feast",
+        "ready": true,
+        "detail": "ok",
+        "owner": "team-data"
+      }
+    ],
+    "trace_id": "3995cd1b319e75bd3f4bbbd278b94bc3"
+  },
+  "no_data_loss": true,
+  "no_duplicate_rows": true
+}

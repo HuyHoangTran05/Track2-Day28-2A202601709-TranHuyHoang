@@ -210,6 +210,8 @@ def seed(
     the only sanctioned producer, so seeding this way exercises validation, the
     idempotency key and the traceparent header exactly as a real client would.
     """
+    import time
+
     import httpx
 
     settings = Settings.from_env()
@@ -227,6 +229,13 @@ def seed(
             accepted[kind], rejected[kind] = [], []
             for row in selected:
                 response = client.post(f"/api/v1/{kind}", json=row)
+                if via_gateway and response.status_code == 429:
+                    # The demo corpus is larger than Envoy's intentional burst
+                    # bucket. Wait for its one-second refill and retry the same
+                    # idempotent request instead of reporting expected edge
+                    # protection as failed ingestion.
+                    time.sleep(1.05)
+                    response = client.post(f"/api/v1/{kind}", json=row)
                 target = accepted if response.status_code == 202 else rejected
                 target[kind].append(
                     response.json()

@@ -1,0 +1,33 @@
+{
+  "verified_at": "2026-09-03",
+  "timezone": "Asia/Saigon",
+  "environment": {
+    "python": "3.11.15",
+    "uv": "0.11.12",
+    "docker_engine": "29.5.3"
+  },
+  "gates": {
+    "ruff": {"status": "pass", "detail": "All checks passed"},
+    "fast_tests": {"status": "pass", "passed": 87, "duration_seconds": 4.83},
+    "matrix_contract": {"status": "pass", "checks": 245},
+    "portability": {"status": "pass"},
+    "manifests": {"status": "pass"},
+    "compose_core_config": {"status": "pass"},
+    "compose_full_config": {"status": "pass"},
+    "gitops_live_drift": {
+      "status": "unverified",
+      "reason": "local cluster has no Argo CD or Gateway API CRDs"
+    },
+    "integration_non_gpu_langsmith": {
+      "status": "pass",
+      "passed": 56,
+      "deselected": 16,
+      "duration_seconds": 235.45
+    },
+    "j1_golden_path": {"status": "pass", "passed": 12, "skipped_gpu": 3},
+    "j2_idempotent_replay": {"status": "pass", "passed": 9},
+    "j3_promotion_rollback": {"status": "pass", "passed": 6, "skipped_gpu": 3},
+    "real_vllm_gpu": {"status": "unverified", "reason": "no real GPU endpoint"},
+    "langsmith": {"status": "unverified", "reason": "no class-issued credential"}
+  }
+}

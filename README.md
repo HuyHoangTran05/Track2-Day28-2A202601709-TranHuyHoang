@@ -371,17 +371,17 @@ Theo [`docs/demo-runbook.md`](docs/demo-runbook.md), cá nhân hoặc nhóm trì
 
 ### Danh sách kiểm tra demo (Demo checklist)
 
-- [ ] Sơ đồ kiến trúc, người phụ trách và 10 điểm kết nối.
-- [ ] Luồng chạy đúng có mã lần chạy, mã theo dõi, phiên bản Delta và MLflow.
-- [ ] Kafka gửi lại dữ liệu nhưng Delta không có bản ghi trùng.
-- [ ] Một sự cố có: dự đoán dấu hiệu → quan sát → khôi phục → chứng minh không mất dữ liệu.
-- [ ] Các số liệu chính trên Grafana và một luồng theo dõi Jaeger xuyên hệ thống.
-- [ ] MLflow chọn phiên bản mới rồi quay lại phiên bản trước mà không sửa mã.
-- [ ] Giải thích được `ready`, `degraded` và `not_ready`.
-- [ ] Tệp K8s/GitOps hợp lệ và giải thích được cách triển khai, quay lại bản trước.
-- [ ] Người làm cá nhân hoặc từng thành viên nhóm giải thích được lựa chọn kỹ thuật
+- [x] Sơ đồ kiến trúc, người phụ trách và 10 điểm kết nối (IP07 được ghi trung thực `UNVERIFIED`).
+- [x] Luồng local chạy đúng có mã lần chạy, mã theo dõi, phiên bản Delta và MLflow.
+- [x] Kafka gửi lại dữ liệu nhưng Delta không có bản ghi trùng.
+- [x] Một sự cố có: dự đoán dấu hiệu → quan sát → khôi phục → chứng minh không mất dữ liệu.
+- [x] Các số liệu chính trên Grafana/Prometheus và một luồng theo dõi Jaeger xuyên hệ thống.
+- [x] MLflow chọn phiên bản mới rồi quay lại phiên bản trước mà không sửa mã.
+- [x] Giải thích được `ready`, `degraded` và `not_ready`.
+- [x] Tệp K8s/GitOps hợp lệ và giải thích được cách triển khai, quay lại bản trước.
+- [x] Người làm cá nhân hoặc từng thành viên nhóm giải thích được lựa chọn kỹ thuật
       của phần mình phụ trách.
-- [ ] Không có mật khẩu, token, cơ sở dữ liệu tạm, bộ nhớ đệm hoặc trọng số mô
+- [x] Không có mật khẩu, token, cơ sở dữ liệu tạm, bộ nhớ đệm hoặc trọng số mô
       hình trong phần mã gửi lên Git.
 
 File nộp và câu hỏi reflection được liệt kê trong

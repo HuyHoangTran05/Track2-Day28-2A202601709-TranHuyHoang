@@ -1,0 +1,42 @@
+{
+  "measured_at": "2026-09-03",
+  "environment": {
+    "os": "Windows",
+    "logical_cpus": 16,
+    "requests_per_run": 200
+  },
+  "runs": [
+    {
+      "target": "gateway /ready",
+      "workers": 8,
+      "statuses": {"200": 8, "503": 12, "429": 180},
+      "latency_ms": {"p50": 6.829300080426037, "p95": 16.171099967323244, "p99": 5611.66559997946},
+      "success_latency_ms": {"p50": 5561.59379996825, "p95": 5636.261000065133, "p99": 5636.261000065133}
+    },
+    {
+      "target": "gateway /ready",
+      "workers": 16,
+      "statuses": {"200": 13, "429": 187},
+      "latency_ms": {"p50": 7.282600039616227, "p95": 760.9748999821022, "p99": 986.1264999490231},
+      "success_latency_ms": {"p50": 920.7359000574797, "p95": 1013.8110000407323, "p99": 1013.8110000407323}
+    },
+    {
+      "target": "direct API /ready",
+      "workers": 8,
+      "statuses": {"200": 200},
+      "latency_ms": {"p50": 457.7013999223709, "p95": 639.4957000156865, "p99": 689.3139999592677},
+      "success_latency_ms": {"p50": 457.7013999223709, "p95": 639.4957000156865, "p99": 689.3139999592677}
+    },
+    {
+      "target": "direct API /ready",
+      "workers": 16,
+      "statuses": {"200": 200},
+      "latency_ms": {"p50": 1946.5685000177473, "p95": 9233.918500016443, "p99": 9474.44539994467},
+      "success_latency_ms": {"p50": 1946.5685000177473, "p95": 9233.918500016443, "p99": 9474.44539994467}
+    }
+  ],
+  "ask_profile": {
+    "status": "unverified",
+    "reason": "no real-vLLM GPU endpoint was available"
+  }
+}

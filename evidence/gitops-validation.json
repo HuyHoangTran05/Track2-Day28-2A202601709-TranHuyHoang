@@ -1,0 +1,35 @@
+{
+  "verified_at": "2026-09-03",
+  "static_validation": {
+    "status": "pass",
+    "command": "uv run python scripts/validate_manifests.py",
+    "required_kinds_present": [
+      "Deployment",
+      "Service",
+      "ServiceAccount",
+      "ConfigMap",
+      "HorizontalPodAutoscaler",
+      "PodDisruptionBudget",
+      "NetworkPolicy",
+      "Gateway",
+      "HTTPRoute"
+    ],
+    "non_root_and_probes_validated": true,
+    "immutable_revision": "refs/tags/v3.0.0",
+    "argocd_self_heal_configured": true,
+    "argocd_prune_configured": true,
+    "revision_history_limit": 5
+  },
+  "local_cluster_discovery": {
+    "context": "docker-desktop",
+    "reachable": true,
+    "kubectl_client": "v1.34.1",
+    "argocd_application_crd_available": false,
+    "gateway_api_crd_available": false
+  },
+  "live_drift_and_self_heal": {
+    "status": "unverified",
+    "reason": "the available local cluster has neither Argo CD nor Gateway API CRDs; no live resources were mutated",
+    "reproduction_runbook": "runbooks/gitops-rollback.md"
+  }
+}

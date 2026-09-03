@@ -6,6 +6,7 @@ import argparse
 import json
 import math
 import time
+import urllib.error
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor
 
@@ -20,6 +21,11 @@ def request(url: str) -> tuple[float, int]:
     try:
         with urllib.request.urlopen(f"{url.rstrip('/')}/ready", timeout=10) as response:
             status = response.status
+    except urllib.error.HTTPError as error:
+        # HTTP errors are valid load-test responses. In particular, Envoy's
+        # expected 429s prove the edge rate limit and must not be confused with
+        # network failures (status 0).
+        status = error.code
     except Exception:
         status = 0
     return (time.perf_counter() - started) * 1000, status
@@ -34,6 +40,9 @@ def main() -> None:
     with ThreadPoolExecutor(max_workers=args.workers) as pool:
         results = list(pool.map(lambda _: request(args.url), range(args.requests)))
     durations = [duration for duration, _ in results]
+    successful = [
+        duration for duration, status in results if 200 <= status < 300
+    ]
     statuses: dict[str, int] = {}
     for _, status in results:
         statuses[str(status)] = statuses.get(str(status), 0) + 1
@@ -48,6 +57,15 @@ def main() -> None:
                     "p95": percentile(durations, 0.95),
                     "p99": percentile(durations, 0.99),
                 },
+                "success_latency_ms": (
+                    {
+                        "p50": percentile(successful, 0.50),
+                        "p95": percentile(successful, 0.95),
+                        "p99": percentile(successful, 0.99),
+                    }
+                    if successful
+                    else None
+                ),
             },
             indent=2,
         )
