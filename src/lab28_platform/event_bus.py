@@ -247,8 +247,17 @@ class BatchConsumer:
                 "group.id": settings.group_id,
                 "auto.offset.reset": "earliest",
                 "enable.auto.commit": False,
-                "session.timeout.ms": 45000,
-                "max.poll.interval.ms": 300000,
+                # The drain is a batch job that runs while a Spark merge is
+                # saturating the same host, so the group coordinator can be slow
+                # to answer a heartbeat. At the 45s default the broker revoked
+                # the assignment mid-batch — "session timed out (in join-state
+                # steady) ... without a successful response from the group
+                # coordinator" — which throws away the in-flight batch and
+                # forces a retry. Waiting is the right behaviour for a batch
+                # consumer: nothing else is competing for these partitions.
+                "session.timeout.ms": 120000,
+                "heartbeat.interval.ms": 10000,
+                "max.poll.interval.ms": 600000,
             }
         )
         self._consumer.subscribe([self._topic])

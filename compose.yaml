@@ -217,6 +217,13 @@ services:
       # the scheduler exits, and every queued run stalls behind
       # MAX_ACTIVE_RUNS_PER_DAG. A real database is the supported answer.
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-db:5432/airflow
+      # The DAG folder is a bind mount from the host, and the default 30s
+      # import timeout is exceeded on it under load even though the module
+      # only imports stdlib and airflow.sdk. A task worker that cannot
+      # import the file in time reports "Dag not found during start up" and
+      # reschedules forever, so the run never finishes and the failure reads
+      # as a stalled pipeline instead of a slow import.
+      AIRFLOW__CORE__DAGBAG_IMPORT_TIMEOUT: "120"
       AIRFLOW__CORE__PARALLELISM: "4"
       AIRFLOW__CORE__MAX_ACTIVE_TASKS_PER_DAG: "4"
       AIRFLOW__CORE__MAX_ACTIVE_RUNS_PER_DAG: "1"

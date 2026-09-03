@@ -33,7 +33,7 @@
 | Matrix contract | **PASS — 245 checks** |
 | Ruff / portability / manifests / Compose config | **PASS** |
 | Argo CD live drift/self-heal | **UNVERIFIED** — cluster không cài Argo CD/Gateway API CRD |
-| Real-vLLM/GPU | **PASS một phần — 8/15 test có gate `gpu`** — endpoint thật trên 2× Tesla T4 (vLLM 0.26.0, `Qwen/Qwen3-1.7B`); `/ready` báo `ready` với cả 5 component và `vLLM identity confirmed`. Bảy test còn lại (J1, J5, trace-coverage) chưa chạy xong: Docker Desktop trên máy này treo ở tầng engine giữa lượt chạy. Xem [`submission/GPU-GATE.md`](submission/GPU-GATE.md) |
+| Real-vLLM/GPU | **PASS một phần — 10/15 test có gate `gpu`** — endpoint thật trên 2× Tesla T4 (vLLM 0.26.0, `Qwen/Qwen3-1.7B`); `/ready` báo `ready` với cả 5 component và `vLLM identity confirmed`. Năm test còn lại (J1 grounding, J5, trace-coverage) chưa chạy xong vì giới hạn của máy chứ không vì assertion. Xem [`submission/GPU-GATE.md`](submission/GPU-GATE.md) |
 | LangSmith export | **PASS — 1 passed** — project thật được tìm thấy, collector đã gửi 12 spans và không có failed-span series |
 
 `integration-report.json` giữ `ready: false` khi IP07 real-vLLM chưa được xác minh trong cùng process, và giữ

@@ -35,17 +35,20 @@ Prometheus đồng thời scrape được endpoint thật: **10/10 target `up`**
 |---|---|
 | `test_j3_promotion_rollback.py` + `test_prometheus_targets.py` | **4 passed**, 11 deselected, 99.86s |
 | `test_j4_degraded_recovery.py` | **4 passed**, 9 deselected, 349.19s |
-| `test_j1_golden_path.py`, `test_j5_trace_metrics_continuity.py`, `test_trace_span_coverage.py` | **chưa hoàn tất** — 7 test |
+| `test_j1_golden_path.py` | **2 passed, 1 chưa xanh** — test grounding fail vì lỗi số 7/8 bên dưới |
+| `test_j5_trace_metrics_continuity.py`, `test_trace_span_coverage.py` | **chưa hoàn tất** — 4 test |
 
-Tổng: **8/15 test `gpu` đã pass thật**. Bảy test còn lại đều là loại cần một DAG run
-end-to-end; chúng chưa chạy xong vì Docker Desktop trên máy này treo ở tầng engine
-(`500 Internal Server Error` trên mọi route của engine API) giữa lượt chạy. Không có test
-nào trong số đó bị nới assertion hay đánh dấu skip để tránh; trạng thái ghi đúng là chưa xong.
+Tổng: **10/15 test `gpu` đã pass thật**. Năm test còn lại đều cần một DAG run end-to-end, và
+chúng chưa chạy xong vì giới hạn của chính máy này chứ không vì assertion: Docker engine sập
+giữa lượt (`500` trên mọi route), producer Kafka của API treo sau đó (lỗi số 7), và session
+Kaggle tự tắt sau ~40 phút không có thay đổi trong notebook nên endpoint GPU mất giữa đường.
+Không test nào bị nới assertion hay skip để tránh; trạng thái ghi đúng là chưa xong.
 
 ## Lỗi thật mà gate này phơi ra
 
-Sáu lỗi dưới đây tồn tại từ trước nhưng bị che vì 15 test `gpu` luôn bị skip khi không có
-endpoint. Tất cả đã được sửa ở tầng cấu hình, không phải bằng cách sửa assertion.
+Mười lỗi dưới đây tồn tại từ trước nhưng bị che vì 15 test `gpu` luôn bị skip khi không có
+endpoint. Trừ lỗi số 8 được ghi lại thành khuyến nghị, tất cả đã được sửa ở tầng cấu hình,
+không phải bằng cách sửa assertion.
 
 1. **Airflow metadata dùng SQLite với `LocalExecutor`.** Dưới một loạt DAG run, writer gặp
    `sqlite3.OperationalError: database is locked` và **scheduler chết**; task cuối không bao
@@ -69,6 +72,30 @@ endpoint. Tất cả đã được sửa ở tầng cấu hình, không phải b
    ở xa). Trên cluster thật probe này sẽ fail dù pod đang trả lời đúng. Đã đặt `timeoutSeconds: 5`.
 6. **Deadline chờ DAG 300s trong suite** nhỏ hơn thời lượng thật khi Spark driver còn lạnh.
    Đo được: ~101s với driver warm, ~7 phút cho run đầu sau khi driver restart. Nâng lên 600s.
+
+7. **Producer Kafka của API không tự hồi phục.** Sau khi Docker engine trên máy này sập và
+   quay lại, mọi `POST /api/v1/documents` trả `503 dependency_unavailable — Kafka delivery
+   failed: 1 message(s) undelivered`, kéo dài tới khi restart process; offset `data.raw` không
+   tăng. Kafka lúc đó hoàn toàn bình thường: partition có leader, ISR đủ, broker không bị
+   fence, `Produce` API dùng được. Vậy lỗi nằm ở handle producer dài hạn, không ở broker.
+8. **`/ready` báo `kafka: True` trong suốt sự cố đó.** `probe_kafka` tạo một `AdminClient`
+   **mới** mỗi lần gọi, nên nó kiểm tra một kết nối khác với kết nối mà đường ghi thật sự dùng.
+   Kết quả: readiness xanh trong khi ingest chết hoàn toàn, và triệu chứng nổi lên ở chỗ khác —
+   test grounding của J1 fail vì document của nó không bao giờ vào được index. Đây là lỗi
+   **chưa sửa**: cách đúng là readiness phải phản ánh trạng thái của chính publisher mà ứng dụng
+   dùng (ví dụ latch lỗi delivery gần nhất, xoá khi có delivery thành công) thay vì mở một
+   kết nối sạch để tự trấn an. Việc này cần thay đổi cách app giữ và chia sẻ publisher, nên
+   được ghi lại thành khuyến nghị chứ không sửa vội ở cuối buổi.
+9. **`dagbag_import_timeout` mặc định 30s là quá ngắn cho DAG folder bind-mount.** Module DAG
+   chỉ import stdlib và `airflow.sdk`, nhưng dưới tải thì worker vẫn không import kịp; task
+   báo `Dag not found during start up` rồi `UP_FOR_RESCHEDULE` mãi, và triệu chứng đọc ra
+   giống "pipeline treo". Đã nâng lên 120s.
+10. **Consumer bị revoke assignment giữa batch.** Với `session.timeout.ms=45000`, khi Spark
+    merge đang chiếm CPU thì group coordinator trả lời chậm và broker thu hồi assignment —
+    `session timed out (in join-state steady) ... without a successful response from the group
+    coordinator` — làm mất batch đang xử lý và buộc retry. Drain là job batch, không có ai
+    tranh partition, nên chờ mới là hành vi đúng: nâng lên 120s kèm `heartbeat.interval.ms`
+    tường minh.
 
 Ngoài ra, ba lỗi phía Kaggle được ghi trong `KAGGLE_GPU_EXTENSION.md`: `torchcodec` build theo
 CUDA 13 làm vLLM chết khi khởi động, Qwen3 nhồi `<think>` vào `content`, và reasoning ăn hết

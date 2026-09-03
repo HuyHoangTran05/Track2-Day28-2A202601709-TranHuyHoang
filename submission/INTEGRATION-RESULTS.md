@@ -25,7 +25,7 @@ trong `evidence/screenshots/`.
 | Gateway rate limit | **PASS** | 30 request: 10 accepted, 20 HTTP 429 |
 | Prometheus targets/alerts | **PASS** | 9 target bắt buộc `up`; 2 alert rule `ok` |
 | Trace span coverage | **PASS (non-GPU leg)** | 11 span; gateway → API → Kafka → Airflow → Spark |
-| GPU / real-vLLM | **PASS một phần — 8/15** | Endpoint thật 2× Tesla T4, vLLM 0.26.0, `Qwen/Qwen3-1.7B`; `ip07-vllm-identity.json` ghi `reachable: true` kèm metric `vllm:*`; `/ready` báo `ready` với cả 5 component. Bảy test cần DAG run chưa hoàn tất vì Docker engine sập giữa lượt. Chi tiết và các lỗi nền tảng mà gate này phơi ra: `submission/GPU-GATE.md` |
+| GPU / real-vLLM | **PASS một phần — 10/15** | Endpoint thật 2× Tesla T4, vLLM 0.26.0, `Qwen/Qwen3-1.7B`; `ip07-vllm-identity.json` ghi `reachable: true` kèm metric `vllm:*`; `/ready` báo `ready` với cả 5 component. Năm test cần DAG run chưa hoàn tất vì giới hạn của máy. Chi tiết và các lỗi nền tảng mà gate này phơi ra: `submission/GPU-GATE.md` |
 | LangSmith external export | **PASS** | `evidence/ip10-langsmith-export.json`: project thật được tìm thấy; 12 spans gửi qua `otlphttp/langsmith`, 0 failed-span series; test marker `langsmith` 1 passed |
 
 Các test bị marker `gpu` loại khỏi full suite đều phụ thuộc endpoint vLLM thật. Cả LangSmith và GPU

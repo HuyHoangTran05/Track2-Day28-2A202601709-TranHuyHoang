@@ -16,7 +16,8 @@ Môi trường: Windows, CPython 3.11.15, `uv` 0.11.12, Docker Engine 29.5.3.
 | LangSmith external export | `uv run pytest integration-tests/test_trace_span_coverage.py -m langsmith -q` | PASS — 1 passed, 4 deselected in 1.07s |
 | GPU gate — J3 + Prometheus | `uv run pytest integration-tests/test_j3_promotion_rollback.py integration-tests/test_prometheus_targets.py -m gpu -q` | PASS — 4 passed, 11 deselected in 99.86s |
 | GPU gate — J4 | `uv run pytest integration-tests/test_j4_degraded_recovery.py -m gpu -q` | PASS — 4 passed, 9 deselected in 349.19s |
-| GPU gate — J1 / J5 / trace-coverage | cùng lệnh với `-m gpu` | CHƯA HOÀN TẤT — 7 test; Docker engine sập giữa lượt |
+| GPU gate — J1 | `uv run pytest integration-tests/test_j1_golden_path.py -m gpu -q` | 2 passed, 1 chưa xanh — grounding fail vì producer Kafka của API treo (xem `submission/GPU-GATE.md`) |
+| GPU gate — J5 / trace-coverage | cùng lệnh với `-m gpu` | CHƯA HOÀN TẤT — 4 test |
 
 Kết quả live integration được ghi riêng trong `submission/INTEGRATION-RESULTS.md`. Bản máy đọc
 được của các gate chính nằm tại `evidence/test-results.json`. LangSmith đã được kiểm chứng bằng
