@@ -4,10 +4,10 @@ Every other journey shows the happy path working. This one takes pieces away
 and asserts on the three answers that decide whether an outage becomes an
 incident:
 
-*Which failures remove a pod from rotation.* Feast is reported by ``/ready`` but
-is not mandatory, so losing it must never turn into a 503 — a 503 takes the pod
-out of the gateway's rotation and turns a colder answer into no answer at all.
-Qdrant is mandatory, so losing it must produce exactly that 503.
+*Which failures fail the readiness check closed.* Feast is reported by
+``/ready`` but is not mandatory, so losing it must never turn into a 503 — a 503
+is what a load balancer keys on, and it turns a colder answer into no answer at
+all. Qdrant is mandatory, so losing it must produce exactly that 503.
 
 *What a caller gets instead of an error.* A degraded answer is a product
 decision, not an accident: it is served, it says so in its evidence, it names
@@ -205,36 +205,42 @@ def test_losing_the_vector_store_fails_the_readiness_check_closed(
 
 
 @pytest.mark.gpu
-def test_the_gateway_stops_routing_to_a_pod_that_is_not_ready(
+def test_the_gateway_reports_the_unready_pods_own_dependency_breakdown(
     api: httpx.Client, gateway: httpx.Client
 ) -> None:
-    """The 503 has to come from the gateway, not from the app behind it.
+    """A caller must learn *which* dependency failed, not just that one did.
 
-    The two are told apart by the body: the app answers a readiness failure with
-    its own JSON breakdown, while an ejected upstream produces the gateway's own
-    error. This is also the test that catches Envoy's default 50 %
-    ``healthy_panic_threshold`` — with a single upstream host, ejecting it puts
-    the cluster into panic mode and traffic keeps flowing to the unready pod.
+    The gateway routes on liveness, so an alive-but-unready pod stays in
+    rotation and its readiness JSON reaches the caller unchanged. That is the
+    point of the choice recorded in ``gateway/envoy.yaml``: routing on readiness
+    was measured on this topology and ejects the single upstream on any
+    dependency blip, replacing an actionable report with an opaque
+    "no healthy upstream". The 503 is therefore expected to carry the app's own
+    component list, and the same verdict has to be visible directly on the pod.
     """
     _wait_for_status(api, "ready", timeout=180.0)
 
-    def rejected_by_the_gateway() -> httpx.Response | None:
+    def proxied_readiness_failure() -> httpx.Response | None:
         response = gateway.get("/ready")
-        if response.status_code != 503 or "components" in response.text:
+        if response.status_code != 503 or "components" not in response.text:
             return None
         return response
 
     with stack.dependency_down(QDRANT_SERVICE):
         _wait_for_status(api, "not_ready", timeout=120.0)
-        rejection = stack.wait_until(
-            "the gateway to take the unready pod out of rotation",
-            rejected_by_the_gateway,
+        proxied = stack.wait_until(
+            "the gateway to carry the pod's own readiness failure",
+            proxied_readiness_failure,
             timeout=120.0,
             interval=2.0,
         )
 
-        assert rejection.status_code == 503
-        # The pod itself is alive the whole time; it is out of rotation, not down.
+        body = proxied.json()
+        assert body["status"] == "not_ready"
+        assert _component(body, "qdrant")["ready"] is False
+        assert _component(body, "qdrant")["owner"], "an ejectable 503 still needs an owner"
+
+        # The pod itself is alive the whole time and answers the same verdict.
         direct_code, direct_body = _readiness(api)
         assert direct_code == 503
         assert direct_body["status"] == "not_ready"
@@ -243,7 +249,7 @@ def test_the_gateway_stops_routing_to_a_pod_that_is_not_ready(
 
 
 @pytest.mark.gpu
-def test_a_pod_out_of_rotation_still_answers_a_direct_request(api: httpx.Client) -> None:
+def test_an_unready_pod_still_answers_a_direct_request(api: httpx.Client) -> None:
     """Not ready means "do not send me traffic", not "I cannot work".
 
     Readiness and serving make the call independently, and they are allowed to

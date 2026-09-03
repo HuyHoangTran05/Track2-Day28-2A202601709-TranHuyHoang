@@ -41,6 +41,44 @@ Kiểm tra endpoint trong cùng session:
 !curl -s http://127.0.0.1:8000/v1/models
 ```
 
+## Ba lỗi thật gặp khi dựng endpoint này
+
+Không phải lý thuyết — đây là những gì đã chặn endpoint chạy thật trên T4:
+
+1. **`torchcodec` cài sẵn của Kaggle build theo CUDA 13.** vLLM import nó và chết ngay
+   khi khởi động với `OSError: libnvrtc.so.13: cannot open shared object file`. vLLM bắt
+   `ImportError` nhưng không bắt `OSError`, nên `pip uninstall -y torchcodec` là cách
+   thoát: thiếu package thành `ImportError` và vLLM bỏ qua nhánh audio/video.
+2. **Qwen3 là model hybrid reasoning.** Mặc định nó nhồi `<think>...</think>` vào
+   `content`, làm mọi assertion về grounding vỡ. Serve với `--reasoning-parser qwen3` để
+   vLLM tách chuỗi suy luận sang `reasoning_content`.
+3. **Reasoning ăn hết ngân sách token.** Với `LAB28_VLLM_MAX_TOKENS=320`, phần suy luận
+   dùng hết quota và `content` trả về **rỗng**. Ngân sách phải đủ cho cả suy luận lẫn câu
+   trả lời; 1024 là mức đã đo đủ cho Qwen3-1.7B.
+
+## Session Kaggle tự tắt theo *thay đổi*, không theo lệnh
+
+Kaggle tắt interactive session sau ~40 phút không có **thay đổi** trong notebook. Chạy
+lệnh trong console **không** được tính, nên một suite test dài hơn thế sẽ mất endpoint
+giữa đường (`530` từ Cloudflare). Thêm/sửa một cell định kỳ mới reset được đồng hồ đó.
+
+## Prometheus phải scrape được endpoint ở xa
+
+Target vLLM không nằm cố định trên máy: qua tunnel thì hostname được cấp theo từng
+session. `monitoring/prometheus.yml` vì thế dùng `file_sd_configs`, và target được sinh
+lúc chạy:
+
+```text
+LAB28_VLLM_BASE_URL=https://<host>/v1 uv run python scripts/render_vllm_target.py
+docker compose --env-file ports.template --profile full up -d --wait api prometheus
+curl -s -X POST http://localhost:9090/-/reload
+```
+
+File `monitoring/targets/vllm.json` đã được gitignore vì nó chứa hostname tạm;
+`monitoring/targets/vllm.json.example` là bản mẫu cho endpoint local. Evidence do suite
+ghi ra cũng redact hostname này thành `<vllm-endpoint-host>`: URL tunnel là một
+capability, ai giữ cũng gọi được model.
+
 ## Bài tập Operator
 
 Viết một adapter thay CPU classifier nhưng vẫn trả contract có output, model

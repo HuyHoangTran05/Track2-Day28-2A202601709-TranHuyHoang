@@ -35,6 +35,10 @@ spec:
               path: /ready
               port: http
             periodSeconds: 10
+            # Readiness probes every dependency, a remote inference endpoint
+            # included, so it takes seconds. The default timeoutSeconds of 1
+            # would fail a pod that is answering correctly.
+            timeoutSeconds: 5
             failureThreshold: 3
           livenessProbe:
             httpGet:

@@ -42,6 +42,10 @@ scrape_configs:
   - job_name: lab28-prometheus
     static_configs: [{targets: ["prometheus:9090"]}]
 
+  # The inference endpoint is not always on this host: a Kaggle/GPU session is
+  # reached through a tunnel whose hostname is issued at run time and must never
+  # be committed. The target is therefore rendered into monitoring/targets by
+  # scripts/render_vllm_target.py, and the file is gitignored.
   - job_name: lab28-vllm-optional
-    static_configs: [{targets: ["host.docker.internal:8001"]}]
+    file_sd_configs: [{files: ["/etc/prometheus/targets/vllm.json"]}]
     metrics_path: /metrics

@@ -1,0 +1,9 @@
+[
+  {
+    "targets": ["host.docker.internal:8001"],
+    "labels": {
+      "__scheme__": "http",
+      "lab28_endpoint": "vllm"
+    }
+  }
+]

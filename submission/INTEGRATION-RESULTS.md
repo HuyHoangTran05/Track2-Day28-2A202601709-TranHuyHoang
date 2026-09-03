@@ -25,11 +25,12 @@ trong `evidence/screenshots/`.
 | Gateway rate limit | **PASS** | 30 request: 10 accepted, 20 HTTP 429 |
 | Prometheus targets/alerts | **PASS** | 9 target bắt buộc `up`; 2 alert rule `ok` |
 | Trace span coverage | **PASS (non-GPU leg)** | 11 span; gateway → API → Kafka → Airflow → Spark |
-| GPU / real-vLLM | **UNVERIFIED** | Endpoint `localhost:8001` không tồn tại; `ip07` ghi đúng `is_real: false` |
+| GPU / real-vLLM | **PASS một phần — 8/15** | Endpoint thật 2× Tesla T4, vLLM 0.26.0, `Qwen/Qwen3-1.7B`; `ip07-vllm-identity.json` ghi `reachable: true` kèm metric `vllm:*`; `/ready` báo `ready` với cả 5 component. Bảy test cần DAG run chưa hoàn tất vì Docker engine sập giữa lượt. Chi tiết và các lỗi nền tảng mà gate này phơi ra: `submission/GPU-GATE.md` |
 | LangSmith external export | **PASS** | `evidence/ip10-langsmith-export.json`: project thật được tìm thấy; 12 spans gửi qua `otlphttp/langsmith`, 0 failed-span series; test marker `langsmith` 1 passed |
 
-Ba test J1 bị skip và các test GPU bị marker loại khỏi full suite đều phụ thuộc GPU/real-vLLM.
-LangSmith đã chạy bằng credential thật bên ngoài repo; không mock endpoint/credential để biến gate thành PASS.
+Các test bị marker `gpu` loại khỏi full suite đều phụ thuộc endpoint vLLM thật. Cả LangSmith và GPU
+đã chạy bằng tài nguyên thật ngoài repo; không mock endpoint hay credential để biến gate thành PASS, và
+phần chưa hoàn tất được ghi là chưa hoàn tất kèm lý do.
 
 `evidence/integration-report.json` là một readiness snapshot bảo thủ: nó chỉ probe trực tiếp sáu
 điểm nên IP02/IP08/IP09/IP10 vẫn là `unverified` dù các live test chuyên biệt đã PASS. IP07 làm

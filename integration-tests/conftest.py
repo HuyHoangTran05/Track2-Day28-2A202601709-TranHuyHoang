@@ -55,8 +55,9 @@ def api(settings: Settings) -> Iterator[httpx.Client]:
     """Direct client to the API, bypassing the gateway.
 
     Some tests deliberately need the pod itself — for instance to show that an
-    unready pod still answers when it is reached directly, while the gateway
-    has already taken it out of rotation.
+    unready pod still answers a direct request, and to compare that verdict with
+    the one the gateway proxies. The gateway routes on liveness, so the pod is
+    not ejected while it is merely unready; ``gateway/envoy.yaml`` records why.
     """
     with httpx.Client(base_url=settings.api_url, timeout=stack.HTTP_TIMEOUT) as client:
         yield client

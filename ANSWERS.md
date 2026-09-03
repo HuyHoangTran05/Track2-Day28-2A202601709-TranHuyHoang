@@ -40,8 +40,9 @@ mới; nếu bỏ `traceparent` thì dữ liệu vẫn đúng nhưng trace bị 
 4. **Evidence lấy từ control-plane API và test assertions.** Việc này chậm hơn chụp một màn
    hình “xanh”, nhưng evidence có ID/version, máy đọc được và có thể tái kiểm tra.
 5. **Không giả lập gate GPU/LangSmith.** LangSmith chỉ được chuyển sang `PASS` sau khi project thật
-   được tìm thấy qua API và collector xác nhận gửi span không lỗi. GPU vẫn phải giữ `UNVERIFIED`
-   cho tới khi real-vLLM endpoint thật được kiểm chứng.
+   được tìm thấy qua API và collector xác nhận gửi span không lỗi. GPU chạy trên endpoint vLLM thật
+   (2× Tesla T4, vLLM 0.26.0), và phần chưa hoàn tất được ghi là chưa hoàn tất kèm lý do — không nới
+   assertion, không skip để tránh.
 
 ## Production gaps
 
@@ -53,7 +54,12 @@ mới; nếu bỏ `traceparent` thì dữ liệu vẫn đúng nhưng trace bị 
 - Cần autoscaling dựa trên queue/latency, capacity test dài hạn và memory-leak/soak test;
   profile trên laptop không được xem là production capacity.
 - Cần ký image/SBOM, vulnerability scanning, admission policy và promotion qua môi trường.
-- Real-vLLM cần endpoint GPU ổn định, authentication, model cache và cold-start runbook.
+- Real-vLLM cần endpoint GPU ổn định, authentication, model cache và cold-start runbook. Gate này
+  là thứ phơi ra sáu lỗi cấu hình thật của nền tảng — SQLite làm scheduler Airflow chết, Spark
+  `local[*]` bóp chết broker heartbeat, `dag-processor` chết mà healthcheck vẫn báo healthy, target
+  Prometheus hard-code, `readinessProbe` thiếu `timeoutSeconds`, deadline chờ DAG nhỏ hơn thời lượng
+  thật — vì 15 test của nó vốn luôn bị skip. Một gate bị skip không phải là một gate đang xanh; nó là
+  vùng chưa ai soi. Chi tiết trong `submission/GPU-GATE.md`.
 - LangSmith export dùng credential thật lưu ngoài repo; local trace backend không được dùng để
   thay thế external export. Evidence chỉ lưu trạng thái API/metrics/test, không lưu credential.
 

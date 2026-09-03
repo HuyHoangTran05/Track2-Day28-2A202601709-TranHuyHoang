@@ -70,13 +70,20 @@ static_resources:
                   address:
                     socket_address: {address: api, port_value: 8000}
       health_checks:
-        - timeout: 2s
-          interval: 2s
-          unhealthy_threshold: 1
+        # Liveness, not readiness, decides whether Envoy can route, and the
+        # thresholds are sized for a single upstream. Routing on /ready was
+        # measured here and rejected: readiness aggregates every dependency, so
+        # one blip — a Kafka heartbeat lost while Spark saturates the host —
+        # ejects the only upstream and turns a recoverable wobble into hard 503s
+        # at the edge. Kubernetes can route on readiness because a Service has
+        # other endpoints to shift to; this gateway has one. Readiness is
+        # therefore proxied, so a caller sees the app's own dependency report
+        # instead of an opaque "no healthy upstream", and rotation is decided by
+        # whether the process is alive at all.
+        - timeout: 5s
+          interval: 5s
+          unhealthy_threshold: 2
           healthy_threshold: 1
-          # Liveness decides whether Envoy can route. Application readiness is
-          # deliberately proxied so students can see the exact degraded
-          # dependency report instead of an opaque "no healthy upstream".
           http_health_check: {path: /health}
       common_lb_config:
         healthy_panic_threshold: {value: 0}

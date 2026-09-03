@@ -30,3 +30,7 @@ dist/
 *.pth
 *.onnx
 *.gguf
+
+# Rendered at run time by scripts/render_vllm_target.py: it can carry a
+# temporary tunnel hostname, which must never be committed.
+monitoring/targets/vllm.json

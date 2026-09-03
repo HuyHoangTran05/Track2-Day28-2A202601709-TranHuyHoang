@@ -148,7 +148,15 @@ services:
       - --conf
       - spark.sql.session.timeZone=UTC
       - --conf
-      - spark.driver.memory=1g
+      - spark.driver.memory=2g
+      # Spark Connect defaults to local[*] and takes every core on the host.
+      # Kafka sits on the same machine, and under that load its broker
+      # heartbeat RPC times out while Airflow and readiness probes crawl. Half
+      # the cores keeps the merge inside the pipeline's deadline and leaves the
+      # rest of the platform answering; local[4] was measured as too few and
+      # more than doubled the merge.
+      - --conf
+      - spark.master=local[8]
     ports:
       - "${LAB28_SPARK_PORT:-15002}:15002"
       - "${LAB28_SPARK_UI_PORT:-4040}:4040"
@@ -165,6 +173,21 @@ services:
       timeout: 5s
       retries: 60
       start_period: 30s
+
+  airflow-db:
+    image: postgres:16.11-alpine
+    profiles: ["full"]
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - airflow-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U airflow -d airflow"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
 
   airflow:
     build:
@@ -187,6 +210,13 @@ services:
       AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_USERS: airflow:admin
       AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_PASSWORDS_FILE: /workspace/.lab28/airflow/simple-auth-passwords.json
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      # LocalExecutor runs the api-server, scheduler, dag-processor, triggerer
+      # and task processes against the metadata database at once. SQLite is
+      # documented as a SequentialExecutor-only backend, and under a burst of
+      # runs it fails exactly that way here: writers hit "database is locked",
+      # the scheduler exits, and every queued run stalls behind
+      # MAX_ACTIVE_RUNS_PER_DAG. A real database is the supported answer.
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-db:5432/airflow
       AIRFLOW__CORE__PARALLELISM: "4"
       AIRFLOW__CORE__MAX_ACTIVE_TASKS_PER_DAG: "4"
       AIRFLOW__CORE__MAX_ACTIVE_RUNS_PER_DAG: "1"
@@ -200,6 +230,8 @@ services:
       - ./.lab28:/workspace/.lab28
       - airflow-data:/opt/airflow
     depends_on:
+      airflow-db:
+        condition: service_healthy
       kafka:
         condition: service_healthy
       spark-connect:
@@ -208,12 +240,20 @@ services:
         condition: service_healthy
       qdrant:
         condition: service_healthy
+    # `airflow standalone` runs the api-server, scheduler, dag-processor and
+    # triggerer in one process group and does not supervise them. The
+    # dag-processor has died here on its own logging pipeline
+    # (ValueError: write to closed file); nothing was parsed afterwards, every
+    # DAG went stale, and the old healthcheck still reported healthy because it
+    # only asked whether the endpoint answered. Read the verdict per component
+    # instead, so a dead component is visible to `docker ps` and to an operator
+    # rather than surfacing later as a 404 on the DAG.
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/api/v2/monitor/health', timeout=3)"]
+      test: ["CMD", "python", "-c", "import json, urllib.request; body = json.loads(urllib.request.urlopen('http://127.0.0.1:8080/api/v2/monitor/health', timeout=5).read()); unhealthy = sorted(name for name, entry in body.items() if entry.get('status') != 'healthy'); print('unhealthy:', unhealthy) if unhealthy else None; raise SystemExit(1 if unhealthy else 0)"]
       interval: 10s
-      timeout: 5s
+      timeout: 8s
       retries: 60
-      start_period: 60s
+      start_period: 90s
 
   api:
     build:
@@ -224,6 +264,10 @@ services:
       LAB28_VLLM_BASE_URL: ${LAB28_VLLM_BASE_URL:-http://host.docker.internal:8001/v1}
       LAB28_VLLM_MODEL_ID: ${LAB28_VLLM_MODEL_ID:-Qwen/Qwen3-1.7B}
       LAB28_VLLM_REQUIRE_REAL: ${LAB28_VLLM_REQUIRE_REAL:-false}
+      # A reasoning model spends part of this budget before it writes the
+      # answer, so the ceiling has to be reachable from the outside: with too
+      # few tokens the response is a truncated thought and an empty answer.
+      LAB28_VLLM_MAX_TOKENS: ${LAB28_VLLM_MAX_TOKENS:-320}
       OTEL_SERVICE_NAME: lab28-api
     ports:
       - "${LAB28_API_PORT:-8000}:8000"
@@ -297,6 +341,7 @@ services:
     volumes:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ./monitoring/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - ./monitoring/targets:/etc/prometheus/targets:ro
       - prometheus-data:/prometheus
     depends_on:
       - api
@@ -325,6 +370,7 @@ services:
 
 volumes:
   airflow-data:
+  airflow-db-data:
   grafana-data:
   mlflow-data:
   prometheus-data:

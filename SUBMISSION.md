@@ -33,10 +33,10 @@
 | Matrix contract | **PASS — 245 checks** |
 | Ruff / portability / manifests / Compose config | **PASS** |
 | Argo CD live drift/self-heal | **UNVERIFIED** — cluster không cài Argo CD/Gateway API CRD |
-| Real-vLLM/GPU | **UNVERIFIED** — không có endpoint GPU thật |
+| Real-vLLM/GPU | **PASS một phần — 8/15 test có gate `gpu`** — endpoint thật trên 2× Tesla T4 (vLLM 0.26.0, `Qwen/Qwen3-1.7B`); `/ready` báo `ready` với cả 5 component và `vLLM identity confirmed`. Bảy test còn lại (J1, J5, trace-coverage) chưa chạy xong: Docker Desktop trên máy này treo ở tầng engine giữa lượt chạy. Xem [`submission/GPU-GATE.md`](submission/GPU-GATE.md) |
 | LangSmith export | **PASS — 1 passed** — project thật được tìm thấy, collector đã gửi 12 spans và không có failed-span series |
 
-`integration-report.json` cố ý giữ `ready: false` khi IP07 real-vLLM chưa được xác minh và giữ
+`integration-report.json` giữ `ready: false` khi IP07 real-vLLM chưa được xác minh trong cùng process, và giữ
 IP02/IP08/IP09/IP10 ở trạng thái `unverified` vì lệnh `lab28 evidence` không tự gọi các hệ thống đó.
 Các điểm này được xác minh riêng bằng live integration tests và evidence tương ứng; không sửa giả
 trạng thái của report.
@@ -54,5 +54,15 @@ uv run pytest integration-tests -m "not gpu and not langsmith" -q
 uv run lab28 evidence
 ```
 
-GPU/LangSmith là gate theo môi trường. LangSmith đã được kiểm chứng bằng credential thật lưu ngoài repo;
-GPU chỉ được đổi sang `PASS` sau khi endpoint real-vLLM thật chạy thành công. Không giả lập bằng chứng.
+Gate GPU cần thêm endpoint thật; quy trình dựng nó và các lỗi đã gặp nằm trong
+[`KAGGLE_GPU_EXTENSION.md`](KAGGLE_GPU_EXTENSION.md):
+
+```text
+LAB28_VLLM_BASE_URL=https://<host>/v1 uv run python scripts/render_vllm_target.py
+LAB28_VLLM_BASE_URL=https://<host>/v1 LAB28_VLLM_REQUIRE_REAL=true LAB28_VLLM_MAX_TOKENS=1024   docker compose --env-file ports.template --profile full up -d --wait api prometheus
+LAB28_VLLM_BASE_URL=https://<host>/v1 LAB28_VLLM_REQUIRE_REAL=true LAB28_VLLM_MAX_TOKENS=1024   uv run pytest integration-tests -m gpu -q
+```
+
+GPU và LangSmith là gate theo môi trường, và cả hai đã chạy bằng tài nguyên thật: LangSmith bằng
+credential lưu ngoài repo, GPU bằng endpoint vLLM thật trên T4. Phần chưa hoàn tất được ghi đúng là
+chưa hoàn tất, kèm lý do; không có gate nào được làm xanh bằng mock.

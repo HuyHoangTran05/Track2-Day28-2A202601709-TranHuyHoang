@@ -35,6 +35,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlsplit
 
 import httpx
 
@@ -139,12 +140,34 @@ def dependency_down(service: str) -> Iterator[None]:
 # --------------------------------------------------------------------------
 
 
+VLLM_HOST_PLACEHOLDER = "<vllm-endpoint-host>"
+_LOCAL_INFERENCE_HOSTS = frozenset({"localhost", "127.0.0.1", "host.docker.internal"})
+
+
+def _redact_inference_host(text: str) -> str:
+    """Replace a remote inference hostname with a stable placeholder.
+
+    A GPU endpoint reached through a tunnel is addressed by a hostname issued
+    per session, and that hostname is a capability: whoever holds it can call
+    the model. Evidence has to record that the endpoint was real and what it
+    answered, not hand the URL to every reader of the repository. A local
+    endpoint is left verbatim because it grants nothing.
+    """
+    host = urlsplit(os.getenv("LAB28_VLLM_BASE_URL", "")).hostname
+    if not host or host in _LOCAL_INFERENCE_HOSTS:
+        return text
+    return text.replace(host, VLLM_HOST_PLACEHOLDER)
+
+
 def write_evidence(name: str, payload: Any) -> Path:
     """Write one demo evidence file and return its path."""
     EVIDENCE_DIR.mkdir(parents=True, exist_ok=True)
     path = EVIDENCE_DIR / name
     path.write_text(
-        json.dumps(payload, indent=2, ensure_ascii=False, default=str), encoding="utf-8"
+        _redact_inference_host(
+            json.dumps(payload, indent=2, ensure_ascii=False, default=str)
+        ),
+        encoding="utf-8",
     )
     return path
 
@@ -211,8 +234,17 @@ class Airflow:
     def run(self, dag_run_id: str) -> dict[str, Any]:
         return self._get(f"/api/v2/dags/{self.dag_id}/dagRuns/{dag_run_id}")
 
-    def wait_for_run(self, dag_run_id: str, *, timeout: float = 300.0) -> dict[str, Any]:
+    #: Measured on the reference workstation: about 100s against a warm Spark
+    #: Connect driver, and about seven minutes on the first run after that
+    #: driver restarts, when the JVM and the Delta package resolution are cold.
+    #: The deadline has to cover the cold case, or a suite run that happens to
+    #: follow a restart reports "the pipeline stalled" for a pipeline that is
+    #: working normally.
+    RUN_TIMEOUT = 600.0
+
+    def wait_for_run(self, dag_run_id: str, *, timeout: float | None = None) -> dict[str, Any]:
         """Block until the run reaches a terminal state and return it."""
+        timeout = self.RUN_TIMEOUT if timeout is None else timeout
 
         def terminal() -> dict[str, Any] | None:
             run = self.run(dag_run_id)
