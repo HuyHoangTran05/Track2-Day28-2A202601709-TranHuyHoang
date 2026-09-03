@@ -39,9 +39,9 @@ mới; nếu bỏ `traceparent` thì dữ liệu vẫn đúng nhưng trace bị 
    quả tái lập, không tăng point count khi index lại và đủ provenance để rollback.
 4. **Evidence lấy từ control-plane API và test assertions.** Việc này chậm hơn chụp một màn
    hình “xanh”, nhưng evidence có ID/version, máy đọc được và có thể tái kiểm tra.
-5. **Không giả lập gate GPU/LangSmith.** Khi không có endpoint/credential thật, trạng thái
-   phải là `UNVERIFIED`; local Jaeger vẫn chứng minh trace leg nội bộ nhưng không thay thế
-   bằng chứng LangSmith hay real-vLLM.
+5. **Không giả lập gate GPU/LangSmith.** LangSmith chỉ được chuyển sang `PASS` sau khi project thật
+   được tìm thấy qua API và collector xác nhận gửi span không lỗi. GPU vẫn phải giữ `UNVERIFIED`
+   cho tới khi real-vLLM endpoint thật được kiểm chứng.
 
 ## Production gaps
 
@@ -54,8 +54,8 @@ mới; nếu bỏ `traceparent` thì dữ liệu vẫn đúng nhưng trace bị 
   profile trên laptop không được xem là production capacity.
 - Cần ký image/SBOM, vulnerability scanning, admission policy và promotion qua môi trường.
 - Real-vLLM cần endpoint GPU ổn định, authentication, model cache và cold-start runbook.
-- LangSmith export cần credential do lớp cấp; local trace backend không chứng minh external
-  export khi credential vắng mặt.
+- LangSmith export dùng credential thật lưu ngoài repo; local trace backend không được dùng để
+  thay thế external export. Evidence chỉ lưu trạng thái API/metrics/test, không lưu credential.
 
 ## Điều sẽ cải tiến
 

@@ -161,11 +161,17 @@ def test_the_langsmith_export_leg_is_configured_and_healthy(prometheus: Promethe
     api_key = os.environ["LANGSMITH_API_KEY"]
     base_url = stack.env("LANGSMITH_ENDPOINT", "https://api.smith.langchain.com")
     project = stack.env("LANGSMITH_PROJECT", "lab28-platform")
+    headers = {"x-api-key": api_key}
+    if workspace_id := os.getenv("LANGSMITH_WORKSPACE_ID"):
+        # Organization-scoped keys can address multiple workspaces. LangSmith's
+        # REST API requires the workspace header for those keys; omitting it
+        # turns a valid credential into a misleading HTTP 403 gate failure.
+        headers["x-tenant-id"] = workspace_id
 
     response = httpx.get(
         f"{base_url.rstrip('/')}/api/v1/sessions",
         params={"name": project},
-        headers={"x-api-key": api_key},
+        headers=headers,
         timeout=stack.HTTP_TIMEOUT,
     )
     assert response.status_code == 200, response.text

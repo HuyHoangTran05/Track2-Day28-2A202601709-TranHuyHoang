@@ -34,7 +34,7 @@
 | Ruff / portability / manifests / Compose config | **PASS** |
 | Argo CD live drift/self-heal | **UNVERIFIED** — cluster không cài Argo CD/Gateway API CRD |
 | Real-vLLM/GPU | **UNVERIFIED** — không có endpoint GPU thật |
-| LangSmith export | **UNVERIFIED** — không có credential do lớp cấp |
+| LangSmith export | **PASS — 1 passed** — project thật được tìm thấy, collector đã gửi 12 spans và không có failed-span series |
 
 `integration-report.json` cố ý giữ `ready: false` khi IP07 real-vLLM chưa được xác minh và giữ
 IP02/IP08/IP09/IP10 ở trạng thái `unverified` vì lệnh `lab28 evidence` không tự gọi các hệ thống đó.
@@ -54,5 +54,5 @@ uv run pytest integration-tests -m "not gpu and not langsmith" -q
 uv run lab28 evidence
 ```
 
-GPU/LangSmith là gate theo môi trường. Khi không có endpoint/credential thật, bài nộp ghi
-`UNVERIFIED` và dùng local evidence tương ứng, không giả lập bằng chứng.
+GPU/LangSmith là gate theo môi trường. LangSmith đã được kiểm chứng bằng credential thật lưu ngoài repo;
+GPU chỉ được đổi sang `PASS` sau khi endpoint real-vLLM thật chạy thành công. Không giả lập bằng chứng.

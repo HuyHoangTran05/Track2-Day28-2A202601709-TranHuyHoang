@@ -26,10 +26,10 @@ trong `evidence/screenshots/`.
 | Prometheus targets/alerts | **PASS** | 9 target bắt buộc `up`; 2 alert rule `ok` |
 | Trace span coverage | **PASS (non-GPU leg)** | 11 span; gateway → API → Kafka → Airflow → Spark |
 | GPU / real-vLLM | **UNVERIFIED** | Endpoint `localhost:8001` không tồn tại; `ip07` ghi đúng `is_real: false` |
-| LangSmith external export | **UNVERIFIED** | Không có `LANGSMITH_API_KEY`; local Jaeger không thay thế gate này |
+| LangSmith external export | **PASS** | `evidence/ip10-langsmith-export.json`: project thật được tìm thấy; 12 spans gửi qua `otlphttp/langsmith`, 0 failed-span series; test marker `langsmith` 1 passed |
 
-Ba test J1 bị skip và các test bị marker loại khỏi full suite đều phụ thuộc GPU/real-vLLM hoặc
-LangSmith. Không mock endpoint/credential để biến các gate này thành PASS.
+Ba test J1 bị skip và các test GPU bị marker loại khỏi full suite đều phụ thuộc GPU/real-vLLM.
+LangSmith đã chạy bằng credential thật bên ngoài repo; không mock endpoint/credential để biến gate thành PASS.
 
 `evidence/integration-report.json` là một readiness snapshot bảo thủ: nó chỉ probe trực tiếp sáu
 điểm nên IP02/IP08/IP09/IP10 vẫn là `unverified` dù các live test chuyên biệt đã PASS. IP07 làm

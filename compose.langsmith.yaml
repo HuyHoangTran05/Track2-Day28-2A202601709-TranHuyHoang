@@ -1,0 +1,8 @@
+services:
+  otel-collector:
+    environment:
+      LANGSMITH_API_KEY: ${LANGSMITH_API_KEY:?set LANGSMITH_API_KEY outside Git}
+      LANGSMITH_PROJECT: ${LANGSMITH_PROJECT:-lab28-platform}
+      LANGSMITH_WORKSPACE_ID: ${LANGSMITH_WORKSPACE_ID:-}
+    volumes:
+      - ./monitoring/otel-collector.langsmith.yaml:/etc/otelcol/config.yaml:ro

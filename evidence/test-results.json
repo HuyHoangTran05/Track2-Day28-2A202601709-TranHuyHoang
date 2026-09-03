@@ -28,6 +28,12 @@
     "j2_idempotent_replay": {"status": "pass", "passed": 9},
     "j3_promotion_rollback": {"status": "pass", "passed": 6, "skipped_gpu": 3},
     "real_vllm_gpu": {"status": "unverified", "reason": "no real GPU endpoint"},
-    "langsmith": {"status": "unverified", "reason": "no class-issued credential"}
+    "langsmith": {
+      "status": "pass",
+      "passed": 1,
+      "deselected": 4,
+      "duration_seconds": 1.07,
+      "evidence": "ip10-langsmith-export.json"
+    }
   }
 }

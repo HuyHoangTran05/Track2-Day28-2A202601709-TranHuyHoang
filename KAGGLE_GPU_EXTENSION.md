@@ -54,3 +54,16 @@ Không hard-code URL tunnel hay token vào notebook/repository.
 - Model download làm cold start lâu; cần cache/preflight.
 - Hai T4 không tự động tăng tốc nếu không cấu hình tensor parallel phù hợp.
 - Kết quả extension không phải bằng chứng Kafka/Delta/MLflow core đã hoạt động.
+
+## LangSmith exporter tùy chọn
+
+Không ghi key vào Compose hoặc Git. Khi có credential thật, nạp biến môi trường ở shell rồi dùng
+override chỉ dành cho live gate:
+
+```text
+docker compose -f compose.yaml -f compose.langsmith.yaml --profile full up -d --build
+uv run pytest integration-tests/test_trace_span_coverage.py -m langsmith -q
+```
+
+`LANGSMITH_WORKSPACE_ID` cần thiết với key dùng được cho nhiều workspace. Collector gửi cùng luồng
+OTLP tới Jaeger và LangSmith; file override không được dùng khi thiếu credential.

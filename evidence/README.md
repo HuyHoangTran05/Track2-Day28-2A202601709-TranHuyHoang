@@ -15,7 +15,7 @@ chỉ giúp xem nhanh metrics và trace.
 | IP07 real-vLLM | `ip07-vllm-identity.json` — trung thực `unverified` |
 | IP08 Gateway | `ip08-gateway.json` |
 | IP09 Metrics | `ip09-prometheus-targets.json`, `ip09-grafana-dashboards.json` |
-| IP10 Trace | `ip10-trace.json` |
+| IP10 Trace | `ip10-trace.json`, `ip10-langsmith-export.json` — local continuity và external export đều đã kiểm chứng |
 | Incident | `incident-recovery.json` |
 | Performance | `performance-profile.json` |
 | Test gates | `test-results.json` |

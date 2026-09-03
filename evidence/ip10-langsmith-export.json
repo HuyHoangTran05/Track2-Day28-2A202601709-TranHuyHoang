@@ -1,0 +1,26 @@
+{
+  "verified_at": "2026-09-03T23:23:00+07:00",
+  "project": "lab28-platform",
+  "api_status": 200,
+  "project_found": true,
+  "workspace_scoped": true,
+  "collector_exporters": [
+    "otlp/jaeger",
+    "otlphttp/langsmith",
+    "debug"
+  ],
+  "sent_spans": {
+    "otlp/jaeger": 13,
+    "otlphttp/langsmith": 12,
+    "debug": 13
+  },
+  "send_failed_span_series": 0,
+  "test": {
+    "command": "uv run pytest integration-tests/test_trace_span_coverage.py -m langsmith -q",
+    "passed": 1,
+    "deselected": 4,
+    "duration_seconds": 1.07
+  },
+  "credential_storage": "external process environment; not committed",
+  "temporary_access_urls_committed": false
+}
