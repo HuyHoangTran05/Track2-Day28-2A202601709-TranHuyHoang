@@ -57,20 +57,21 @@
       "skipped_gpu": 3
     },
     "real_vllm_gpu": {
-      "status": "partial",
-      "passed": 10,
-      "not_run": 5,
+      "status": "pass",
+      "passed": 15,
       "endpoint": {
         "hardware": "2x Tesla T4",
         "server": "vLLM 0.26.0",
         "model": "Qwen/Qwen3-1.7B",
-        "reasoning_parser": "qwen3"
+        "reasoning_parser": "qwen3",
+        "max_tokens": 1024
       },
       "readiness": "ready — all five components, vLLM identity confirmed",
       "prometheus_targets_up": "10/10",
-      "not_run_reason": "host limits, not assertions: the Docker engine answered 500 on every route mid-run, the API's Kafka producer then stayed broken until restart, and the Kaggle session shut itself down after ~40 minutes without a notebook change, taking the GPU endpoint with it",
       "evidence": [
         "ip07-vllm-identity.json",
+        "ip09-prometheus-targets.json",
+        "ip10-trace.json",
         "../submission/GPU-GATE.md"
       ]
     },

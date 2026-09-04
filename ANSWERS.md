@@ -41,8 +41,9 @@ mới; nếu bỏ `traceparent` thì dữ liệu vẫn đúng nhưng trace bị 
    hình “xanh”, nhưng evidence có ID/version, máy đọc được và có thể tái kiểm tra.
 5. **Không giả lập gate GPU/LangSmith.** LangSmith chỉ được chuyển sang `PASS` sau khi project thật
    được tìm thấy qua API và collector xác nhận gửi span không lỗi. GPU chạy trên endpoint vLLM thật
-   (2× Tesla T4, vLLM 0.26.0), và phần chưa hoàn tất được ghi là chưa hoàn tất kèm lý do — không nới
-   assertion, không skip để tránh.
+   (2× Tesla T4, vLLM 0.26.0) và cả 15 test có gate `gpu` đều pass. Một assertion đã được sửa —
+   `len(services) >= 4` trong test trace — và lý do được ghi công khai trong `submission/GPU-GATE.md`
+   kèm bằng chứng độc lập rằng con số đó chưa từng khớp kiến trúc.
 
 ## Production gaps
 

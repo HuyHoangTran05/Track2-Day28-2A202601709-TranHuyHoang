@@ -14,10 +14,10 @@ Môi trường: Windows, CPython 3.11.15, `uv` 0.11.12, Docker Engine 29.5.3.
 | Compose Core config | `docker compose --env-file ports.template config --quiet` | PASS (exit 0) |
 | Compose Full config | `docker compose --env-file ports.template --profile full config --quiet` | PASS (exit 0) |
 | LangSmith external export | `uv run pytest integration-tests/test_trace_span_coverage.py -m langsmith -q` | PASS — 1 passed, 4 deselected in 1.07s |
-| GPU gate — J3 + Prometheus | `uv run pytest integration-tests/test_j3_promotion_rollback.py integration-tests/test_prometheus_targets.py -m gpu -q` | PASS — 4 passed, 11 deselected in 99.86s |
-| GPU gate — J4 | `uv run pytest integration-tests/test_j4_degraded_recovery.py -m gpu -q` | PASS — 4 passed, 9 deselected in 349.19s |
-| GPU gate — J1 | `uv run pytest integration-tests/test_j1_golden_path.py -m gpu -q` | 2 passed, 1 chưa xanh — grounding fail vì producer Kafka của API treo (xem `submission/GPU-GATE.md`) |
-| GPU gate — J5 / trace-coverage | cùng lệnh với `-m gpu` | CHƯA HOÀN TẤT — 4 test |
+| GPU gate — J1 | `uv run pytest integration-tests/test_j1_golden_path.py -m gpu -q` | PASS — 3 passed, 12 deselected in 158.79s |
+| GPU gate — J3 + Prometheus + J4 | cùng lệnh với `-m gpu` | PASS — 8 passed, 20 deselected in 173.56s |
+| GPU gate — J5 | `uv run pytest integration-tests/test_j5_trace_metrics_continuity.py -m gpu -q` | PASS — 1 passed, 9 deselected in 70.03s |
+| GPU gate — trace coverage | `uv run pytest integration-tests/test_trace_span_coverage.py -m gpu -q` | PASS — 3 passed, 2 deselected in 73.50s |
 
 Kết quả live integration được ghi riêng trong `submission/INTEGRATION-RESULTS.md`. Bản máy đọc
 được của các gate chính nằm tại `evidence/test-results.json`. LangSmith đã được kiểm chứng bằng

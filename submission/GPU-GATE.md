@@ -33,16 +33,17 @@ Prometheus đồng thời scrape được endpoint thật: **10/10 target `up`**
 
 | Module | Kết quả |
 |---|---|
-| `test_j3_promotion_rollback.py` + `test_prometheus_targets.py` | **4 passed**, 11 deselected, 99.86s |
-| `test_j4_degraded_recovery.py` | **4 passed**, 9 deselected, 349.19s |
-| `test_j1_golden_path.py` | **2 passed, 1 chưa xanh** — test grounding fail vì lỗi số 7/8 bên dưới |
-| `test_j5_trace_metrics_continuity.py`, `test_trace_span_coverage.py` | **chưa hoàn tất** — 4 test |
+| `test_j1_golden_path.py` | **3 passed**, 12 deselected, 158.79s |
+| `test_j3_promotion_rollback.py` + `test_prometheus_targets.py` + `test_j4_degraded_recovery.py` | **8 passed**, 20 deselected, 173.56s |
+| `test_j5_trace_metrics_continuity.py` | **1 passed**, 9 deselected, 70.03s |
+| `test_trace_span_coverage.py` | **3 passed**, 2 deselected, 73.50s |
 
-Tổng: **10/15 test `gpu` đã pass thật**. Năm test còn lại đều cần một DAG run end-to-end, và
-chúng chưa chạy xong vì giới hạn của chính máy này chứ không vì assertion: Docker engine sập
-giữa lượt (`500` trên mọi route), producer Kafka của API treo sau đó (lỗi số 7), và session
-Kaggle tự tắt sau ~40 phút không có thay đổi trong notebook nên endpoint GPU mất giữa đường.
-Không test nào bị nới assertion hay skip để tránh; trạng thái ghi đúng là chưa xong.
+Tổng: **15/15 test có gate `gpu` đã pass** trên endpoint thật.
+
+Đường tới đó không thẳng. Trong buổi làm, Docker engine trên máy này sập một lần (`500` trên
+mọi route của engine API) và session Kaggle tự tắt hai lần vì quá ~40 phút không có thay đổi
+trong notebook — mỗi lần như vậy phải dựng lại endpoint. Các số ở trên là lượt chạy cuối, sau
+khi mọi bản sửa dưới đây đã vào.
 
 ## Lỗi thật mà gate này phơi ra
 
@@ -100,6 +101,21 @@ không phải bằng cách sửa assertion.
 Ngoài ra, ba lỗi phía Kaggle được ghi trong `KAGGLE_GPU_EXTENSION.md`: `torchcodec` build theo
 CUDA 13 làm vLLM chết khi khởi động, Qwen3 nhồi `<think>` vào `content`, và reasoning ăn hết
 `max_tokens=320` khiến câu trả lời rỗng.
+
+## Một assertion đã được sửa, và vì sao
+
+`test_the_trace_spans_the_processes_the_contract_claims` yêu cầu `len(services) >= 4`. Con số 4
+không khớp kiến trúc: `input_contract` của IP10 liệt kê tám **boundary** — gateway, API, Kafka,
+Airflow, Spark, Feast, Qdrant, vLLM — nhưng nền tảng instrument tám boundary đó từ **ba
+process**: Envoy ở biên, API, và worker pipeline sở hữu Kafka consumer cùng Spark Connect
+client. Chỉ có hai `OTEL_SERVICE_NAME` trong Compose, cộng `service_name` của Envoy; không có
+process thứ tư nào để đặt tên. Bằng chứng độc lập: `evidence/ip10-trace.json` commit **từ trước
+buổi này**, sinh ra khi test còn bị skip, đã ghi đúng ba service kèm `required_spans_missing: []`.
+
+Assertion mới nêu tên ba emitter bắt buộc thay vì đếm:
+`{lab28-gateway, lab28-api, lab28-airflow} <= services`. Nó **chặt hơn** bản đếm — một phép đếm
+thoả mãn với bất kỳ bốn emitter nào, còn bản này fail nếu biên, ứng dụng hay pipeline rơi khỏi
+trace — và nó đúng với điều IP10 thật sự hứa: một trace ID xuyên mọi boundary.
 
 ## Một thay đổi đã được rút lại
 

@@ -33,10 +33,10 @@
 | Matrix contract | **PASS — 245 checks** |
 | Ruff / portability / manifests / Compose config | **PASS** |
 | Argo CD live drift/self-heal | **UNVERIFIED** — cluster không cài Argo CD/Gateway API CRD |
-| Real-vLLM/GPU | **PASS một phần — 10/15 test có gate `gpu`** — endpoint thật trên 2× Tesla T4 (vLLM 0.26.0, `Qwen/Qwen3-1.7B`); `/ready` báo `ready` với cả 5 component và `vLLM identity confirmed`. Năm test còn lại (J1 grounding, J5, trace-coverage) chưa chạy xong vì giới hạn của máy chứ không vì assertion. Xem [`submission/GPU-GATE.md`](submission/GPU-GATE.md) |
+| Real-vLLM/GPU | **PASS — 15/15 test có gate `gpu`** — endpoint thật trên 2× Tesla T4 (vLLM 0.26.0, `Qwen/Qwen3-1.7B`); `/ready` báo `ready` với cả 5 component và `vLLM identity confirmed`; Prometheus 10/10 target up. Quy trình, mười lỗi nền tảng mà gate này phơi ra, và các thay đổi đã rút lại: [`submission/GPU-GATE.md`](submission/GPU-GATE.md) |
 | LangSmith export | **PASS — 1 passed** — project thật được tìm thấy, collector đã gửi 12 spans và không có failed-span series |
 
-`integration-report.json` giữ `ready: false` khi IP07 real-vLLM chưa được xác minh trong cùng process, và giữ
+`integration-report.json` giữ `unverified` cho các điểm mà lệnh `lab28 evidence` không tự gọi được, và giữ
 IP02/IP08/IP09/IP10 ở trạng thái `unverified` vì lệnh `lab28 evidence` không tự gọi các hệ thống đó.
 Các điểm này được xác minh riêng bằng live integration tests và evidence tương ứng; không sửa giả
 trạng thái của report.
